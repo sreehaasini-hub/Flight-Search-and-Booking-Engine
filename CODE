@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Search and Booking Engine</title>
+
+    <style>
+        body{
+            font-family:Arial;
+            background:#f5f5f5;
+            margin:20px;
+        }
+
+        .container{
+            max-width:1000px;
+            margin:auto;
+            background:white;
+            padding:20px;
+            border-radius:10px;
+        }
+
+        h1,h2{
+            text-align:center;
+        }
+
+        input,button,select{
+            padding:10px;
+            margin:5px;
+        }
+
+        .card{
+            border:1px solid #ccc;
+            padding:15px;
+            margin:10px 0;
+            border-radius:10px;
+        }
+
+        .hidden{
+            display:none;
+        }
+
+        .error{
+            color:red;
+        }
+
+        .success{
+            color:green;
+        }
+
+        nav button{
+            margin-right:10px;
+        }
+
+        .skeleton{
+            height:80px;
+            background:#ddd;
+            margin:10px 0;
+            border-radius:10px;
+            animation:pulse 1s infinite;
+        }
+
+        @keyframes pulse{
+            0%{opacity:0.5;}
+            50%{opacity:1;}
+            100%{opacity:0.5;}
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Flight Search & Booking Engine</h1>
+
+    <nav>
+        <button onclick="showPage('login')">Login</button>
+        <button onclick="showPage('search')">Search Flights</button>
+        <button onclick="showPage('booking')">My Booking</button>
+    </nav>
+
+    <!-- CO4 Authentication -->
+    <div id="loginPage">
+
+        <h2>Login</h2>
+
+        <input type="email" id="email" placeholder="Email">
+
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="login()">Login</button>
+
+        <p id="loginMsg"></p>
+
+    </div>
+
+    <!-- CO1 Declarative UI -->
+    <div id="searchPage" class="hidden">
+
+        <h2>Flight Search</h2>
+
+        <input type="text" id="source" placeholder="Source">
+
+        <input type="text" id="destination" placeholder="Destination">
+
+        <input type="date" id="date">
+
+        <button onclick="searchFlights()">
+            Search
+        </button>
+
+        <div id="loading"></div>
+
+        <div id="results"></div>
+
+    </div>
+
+    <!-- CO5 Booking -->
+    <div id="bookingPage" class="hidden">
+
+        <h2>Booking Details</h2>
+
+        <div id="selectedFlight"></div>
+
+        <form onsubmit="confirmBooking(event)">
+
+            <input
+                type="text"
+                id="passengerName"
+                placeholder="Passenger Name"
+            >
+
+            <input
+                type="email"
+                id="passengerEmail"
+                placeholder="Passenger Email"
+            >
+
+            <select id="seat">
+
+                <option value="">
+                    Select Seat
+                </option>
+
+                <option>Window</option>
+
+                <option>Middle</option>
+
+                <option>Aisle</option>
+
+            </select>
+
+            <button>
+                Confirm Booking
+            </button>
+
+        </form>
+
+        <p id="bookingMsg"></p>
+
+        <h3>Booking History</h3>
+
+        <div id="history"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* ======================
+   CO2 ES6 Features
+====================== */
+
+const flightsDatabase = [
+
+    {
+        id:1,
+        airline:"IndiGo",
+        source:"Hyderabad",
+        destination:"Delhi",
+        price:4500
+    },
+
+    {
+        id:2,
+        airline:"Air India",
+        source:"Hyderabad",
+        destination:"Mumbai",
+        price:5000
+    },
+
+    {
+        id:3,
+        airline:"Vistara",
+        source:"Delhi",
+        destination:"Bangalore",
+        price:6000
+    },
+
+    {
+        id:4,
+        airline:"SpiceJet",
+        source:"Mumbai",
+        destination:"Chennai",
+        price:3500
+    }
+
+];
+
+
+/* ======================
+   CO4 Global State
+====================== */
+
+let currentUser = localStorage.getItem("user") || "";
+
+let selectedFlight = null;
+
+let bookingHistory =
+    JSON.parse(localStorage.getItem("bookings")) || [];
+
+
+/* ======================
+   CO2 Closure
+====================== */
+
+function createCounter(){
+
+    let count = 0;
+
+    return function(){
+
+        count++;
+
+        console.log("Search Count:",count);
+
+        return count;
+    };
+}
+
+const counter = createCounter();
+
+
+/* ======================
+   CO5 Routing
+====================== */
+
+function showPage(page){
+
+    document.getElementById("loginPage")
+    .classList.add("hidden");
+
+    document.getElementById("searchPage")
+    .classList.add("hidden");
+
+    document.getElementById("bookingPage")
+    .classList.add("hidden");
+
+
+    if(page==="login")
+        document.getElementById("loginPage")
+        .classList.remove("hidden");
+
+    if(page==="search")
+        document.getElementById("searchPage")
+        .classList.remove("hidden");
+
+    if(page==="booking")
+        document.getElementById("bookingPage")
+        .classList.remove("hidden");
+}
+
+
+/* ======================
+   CO4 Authentication
+====================== */
+
+function login(){
+
+    const email =
+        document.getElementById("email").value;
+
+    const password =
+        document.getElementById("password").value;
+
+
+    if(email==="" || password.length<4){
+
+        document.getElementById("loginMsg")
+        .innerHTML =
+        "<span class='error'>Invalid Credentials</span>";
+
+        return;
+    }
+
+    currentUser = email;
+
+    localStorage.setItem("user",email);
+
+    document.getElementById("loginMsg")
+    .innerHTML =
+    "<span class='success'>Login Successful</span>";
+
+    showPage("search");
+}
+
+
+/* ======================
+   CO2 Async/Await
+   CO4 Service Layer
+====================== */
+
+async function fetchFlights(){
+
+    return new Promise((resolve)=>{
+
+        setTimeout(()=>{
+
+            resolve(flightsDatabase);
+
+        },1500);
+
+    });
+}
+
+
+/* ======================
+   CO3 Rendering
+====================== */
+
+async function searchFlights(){
+
+    counter();
+
+    const source =
+        document.getElementById("source")
+        .value
+        .toLowerCase();
+
+    const destination =
+        document.getElementById("destination")
+        .value
+        .toLowerCase();
+
+
+    document.getElementById("loading")
+    .innerHTML =
+    "<div class='skeleton'></div><div class='skeleton'></div>";
+
+    document.getElementById("results")
+    .innerHTML = "";
+
+
+    const flights = await fetchFlights();
+
+
+    document.getElementById("loading")
+    .innerHTML = "";
+
+
+    const filtered = flights.filter(f=>
+
+```html
+        f.source.toLowerCase().includes(source) &&
+        f.destination.toLowerCase().includes(destination)
+    );
+
+
+    /* CO4 Derived State */
+
+    const totalFlights = filtered.length;
+
+    let html =
+        "<h3>Total Flights: "+totalFlights+"</h3>";
+
+
+    filtered.forEach(flight=>{
+
+        html += `
+
+        <div class="card">
+
+            <h3>${flight.airline}</h3>
+
+            <p>
+            ${flight.source}
+            →
+            ${flight.destination}
+            </p>
+
+            <p>₹${flight.price}</p>
+
+            <button onclick="bookFlight(${flight.id})">
+                Book Now
+            </button>
+
+        </div>
+
+        `;
+    });
+
+
+    if(filtered.length===0){
+
+        html =
+        "<p class='error'>No Flights Found</p>";
+    }
+
+
+    document.getElementById("results")
+    .innerHTML = html;
+}
+
+
+/* ======================
+   CO4 State Lifting
+====================== */
+
+function bookFlight(id){
+
+    if(currentUser===""){
+
+        alert("Please Login First");
+
+        showPage("login");
+
+        return;
+    }
+
+
+    selectedFlight =
+        flightsDatabase.find(f=>f.id===id);
+
+
+    document.getElementById("selectedFlight")
+    .innerHTML = `
+
+        <div class="card">
+
+            <h3>${selectedFlight.airline}</h3>
+
+            <p>
+            ${selectedFlight.source}
+            →
+            ${selectedFlight.destination}
+            </p>
+
+            <p>Price: ₹${selectedFlight.price}</p>
+
+        </div>
+
+    `;
+
+
+    showPage("booking");
+}
+
+
+/* ======================
+   CO5 Form Validation
+====================== */
+
+function confirmBooking(event){
+
+    event.preventDefault();
+
+
+    const passengerName =
+        document.getElementById("passengerName")
+        .value;
+
+    const passengerEmail =
+        document.getElementById("passengerEmail")
+        .value;
+
+    const seat =
+        document.getElementById("seat")
+        .value;
+
+
+    if(
+        passengerName==="" ||
+        passengerEmail==="" ||
+        seat===""
+    ){
+
+        document.getElementById("bookingMsg")
+        .innerHTML =
+        "<span class='error'>Fill all fields</span>";
+
+        return;
+    }
+
+
+    const booking = {
+
+        user:currentUser,
+
+        passengerName,
+
+        passengerEmail,
+
+        seat,
+
+        flight:selectedFlight,
+
+        bookingId:
+            Date.now()
+    };
+
+
+    bookingHistory.push(booking);
+
+
+    localStorage.setItem(
+        "bookings",
+        JSON.stringify(bookingHistory)
+    );
+
+
+    document.getElementById("bookingMsg")
+    .innerHTML =
+    "<span class='success'>Booking Confirmed</span>";
+
+
+    renderHistory();
+}
+
+
+/* ======================
+   CO5 Browser Storage
+====================== */
+
+function renderHistory(){
+
+    let html = "";
+
+
+    bookingHistory.forEach(b=>{
+
+        html += `
+
+        <div class="card">
+
+            <p>
+            Booking ID:
+            ${b.bookingId}
+            </p>
+
+            <p>
+            Passenger:
+            ${b.passengerName}
+            </p>
+
+            <p>
+            Flight:
+            ${b.flight.airline}
+            </p>
+
+            <p>
+            Route:
+            ${b.flight.source}
+            →
+            ${b.flight.destination}
+            </p>
+
+            <p>
+            Seat:
+            ${b.seat}
+            </p>
+
+        </div>
+
+        `;
+    });
+
+
+    document.getElementById("history")
+    .innerHTML = html;
+}
+
+
+/* ======================
+   CO6 Error Handling
+====================== */
+
+window.onerror = function(){
+
+    alert("Unexpected Error Occurred");
+
+};
+
+
+/* ======================
+   CO6 Performance
+====================== */
+
+renderHistory();
+
+if(currentUser!=="")
+    showPage("search");
+else
+    showPage("login");
+
+/*
+CO1:
+Declarative UI, Component Thinking
+
+CO2:
+ES6, Closures, Async/Await,
+Promise, Service Layer
+
+CO3:
+Rendering Logic,
+Reusable UI Blocks
+
+CO4:
+Authentication,
+Global State,
+State Lifting,
+Derived State
+
+CO5:
+Booking Forms,
+Validation,
+Browser Storage,
+Simple Routing
+
+CO6:
+Error Handling,
+Production Readiness
+*/
+
+</script>
+
+</body>
+</html>
