@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyReserve | Flight Booking Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .seat.selected { background-color: #3b82f6; color: white; }
+        .seat.occupied { background-color: #d1d5db; cursor: not-allowed; }
+        .page { display: none; }
+        .page.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+
+    <!-- Navigation -->
+    <nav class="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center px-4">
+            <div class="flex items-center gap-2 text-2xl font-bold cursor-pointer" onclick="showPage('home')">
+                <i data-lucide="plane"></i> SkyReserve
+            </div>
+            <div class="hidden md:flex gap-8 font-medium">
+                <a href="#" onclick="showPage('home')" class="hover:text-blue-200">Search</a>
+                <a href="#" class="hover:text-blue-200">My Bookings</a>
+                <a href="#" class="hover:text-blue-200">Support</a>
+            </div>
+            <button class="bg-white text-blue-700 px-5 py-2 rounded-full font-bold text-sm">Login</button>
+        </div>
+    </nav>
+
+    <!-- 1. Home / Search Page -->
+    <section id="home" class="page active">
+        <div class="bg-blue-700 h-[400px] flex flex-col items-center justify-center text-white px-4">
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4 text-center">Where to next?</h1>
+            <p class="text-xl text-blue-100 mb-8 text-center">Find the best deals on 100+ global routes</p>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-5xl text-gray-800">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">From</label>
+                        <select id="fromCity" class="w-full border-b-2 p-2 outline-none focus:border-blue-500 font-semibold"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">To</label>
+                        <select id="toCity" class="w-full border-b-2 p-2 outline-none focus:border-blue-500 font-semibold"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Date</label>
+                        <input type="date" id="travelDate" class="w-full border-b-2 p-2 outline-none focus:border-blue-500 font-semibold" value="2024-12-01">
+                    </div>
+                    <button onclick="searchFlights()" class="bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 h-14 transition-all shadow-lg">
+                        <i data-lucide="search" size="20"></i> Search Flights
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Results Page -->
+    <section id="results" class="page max-w-6xl mx-auto py-10 px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold">Available Flights</h2>
+            <button onclick="showPage('home')" class="text-blue-600 font-semibold flex items-center gap-1">
+                <i data-lucide="arrow-left" size="18"></i> Modify Search
+            </button>
+        </div>
+        <div id="flightList" class="grid gap-6">
+            <!-- Flights injected here -->
+        </div>
+    </section>
+
+    <!-- 3. Checkout Page -->
+    <section id="checkout" class="page max-w-6xl mx-auto py-10 px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <!-- Seat Selection -->
+            <div class="lg:col-span-2">
+                <h2 class="text-2xl font-bold mb-6">Select Your Seat</h2>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border text-center">
+                    <div class="w-48 mx-auto mb-8 bg-gray-200 py-2 rounded-t-full text-xs font-bold text-gray-500 uppercase tracking-widest">Front of Aircraft</div>
+                    <div id="seatMap" class="grid grid-cols-4 gap-4 max-w-xs mx-auto">
+                        <!-- Seats injected here -->
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mt-12 mb-6">Passenger Details</h2>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" placeholder="First Name" class="border p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" placeholder="Last Name" class="border p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <input type="email" placeholder="Email Address" class="w-full border p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div id="summaryCard" class="bg-white p-8 rounded-3xl shadow-xl border-t-8 border-blue-600 h-fit">
+                <!-- Summary injected here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Success Page -->
+    <section id="success" class="page text-center py-20">
+        <div class="max-w-md mx-auto bg-white p-10 rounded-3xl shadow-2xl border-2 border-green-100">
+            <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                <i data-lucide="check-circle" size="48"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800">Booking Confirmed!</h2>
+            <p class="text-gray-500 mt-2">Your flight has been successfully booked.</p>
+            <div class="my-8 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <p class="text-xs font-bold text-gray-400 uppercase">PNR Reference</p>
+                <p id="pnrDisplay" class="text-4xl font-black tracking-widest text-blue-800"></p>
+            </div>
+            <button onclick="showPage('home')" class="w-full bg-blue-700 text-white py-4 rounded-xl font-bold">Return Home</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-8 text-center">
+            <p class="text-white font-bold mb-4">SkyReserve Flight Engine</p>
+            <p class="text-sm">Developed for Portfolio Demo. All Rights Reserved &copy; 2024.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA LAYER (Mocking 100 Flights) ---
+        const cities = ["New York (JFK)", "London (LHR)", "Dubai (DXB)", "Paris (CDG)", "Tokyo (HND)", "Mumbai (BOM)", "Singapore (SIN)", "Sydney (SYD)"];
+        const airlines = ["Delta Air", "Emirates", "Indigo", "British Airways", "Air France", "Qatar Airways"];
+        let flights = [];
+        let selectedFlight = null;
+        let selectedSeat = null;
+
+        function generateData() {
+            for (let i = 1; i <= 100; i++) {
+                const from = cities[i % cities.length];
+                const to = cities[(i + 1) % cities.length];
+                flights.push({
+                    id: i,
+                    airline: airlines[Math.floor(Math.random() * airlines.length)],
+                    from: from,
+                    to: to,
+                    price: Math.floor(Math.random() * 800) + 200,
+                    time: `${Math.floor(Math.random() * 12 + 1)}:${randomChoice(['00', '30'])} ${randomChoice(['AM', 'PM'])}`,
+                    duration: `${Math.floor(Math.random() * 10 + 2)}h 45m`
+                });
+            }
+            populateDropdowns();
+        }
+
+        const randomChoice = arr => arr[Math.floor(Math.random() * arr.length)];
+
+        function populateDropdowns() {
+            const fromEl = document.getElementById('fromCity');
+            const toEl = document.getElementById('toCity');
+            cities.forEach(c => {
+                fromEl.innerHTML += `<option value="${c}">${c}</option>`;
+                toEl.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            toEl.selectedIndex = 1;
+        }
+
+        // --- UI ROUTER ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // --- SEARCH ENGINE ---
+        function searchFlights() {
+            const from = document.getElementById('fromCity').value;
+            const to = document.getElementById('toCity').value;
+            const results = flights.filter(f => f.from === from && f.to === to);
+            
+            const listEl = document.getElementById('flightList');
+            listEl.innerHTML = results.length ? '' : '<p class="text-center text-gray-500 py-20">No flights found for this route today.</p>';
+
+            results.forEach(f => {
+                listEl.innerHTML += `
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border flex flex-col md:flex-row justify-between items-center hover:border-blue-500 transition cursor-default">
+                        <div class="flex items-center gap-6 mb-4 md:mb-0">
+                            <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-700 font-black">${f.airline[0]}</div>
+                            <div>
+                                <h3 class="font-bold text-xl">${f.airline}</h3>
+                                <p class="text-sm text-gray-400">${f.from} → ${f.to}</p>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-bold text-2xl">${f.time}</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-widest">${f.duration} | Non-stop</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-3xl font-black text-blue-900">$${f.price}</p>
+                            <button onclick="bookFlight(${f.id})" class="mt-2 bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Select</button>
+                        </div>
+                    </div>
+                `;
+            });
+            showPage('results');
+        }
+
+        // --- BOOKING FLOW ---
+        function bookFlight(id) {
+            selectedFlight = flights.find(f => f.id === id);
+            selectedSeat = null;
+            renderSeats();
+            renderSummary();
+            showPage('checkout');
+        }
+
+        function renderSeats() {
+            const mapEl = document.getElementById('seatMap');
+            mapEl.innerHTML = '';
+            for (let i = 1; i <= 24; i++) {
+                const isOccupied = i % 7 === 0;
+                mapEl.innerHTML += `
+                    <button 
+                        class="seat w-12 h-12 rounded-lg border-2 font-bold text-sm flex items-center justify-center transition ${isOccupied ? 'occupied' : 'border-gray-200 hover:border-blue-400'}"
+                        ${isOccupied ? 'disabled' : `onclick="selectSeat(this, ${i})"`}
+                    >
+                        ${i}${randomChoice(['A', 'B', 'C', 'D'])}
+                    </button>
+                `;
+            }
+        }
+
+        function selectSeat(el, num) {
+            document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedSeat = num;
+            renderSummary();
+        }
+
+        function renderSummary() {
+            const el = document.getElementById('summaryCard');
+            el.innerHTML = `
+                <h3 class="text-xl font-bold mb-6">Fare Summary</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Ticket Price</span>
+                        <span class="font-bold">$${selectedFlight.price}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Seat Selection</span>
+                        <span class="font-bold">${selectedSeat ? 'Selected' : 'Not Selected'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Taxes & Fees</span>
+                        <span class="font-bold text-green-600">Free</span>
+                    </div>
+                    <hr>
+                    <div class="flex justify-between text-2xl font-black">
+                        <span>Total</span>
+                        <span>$${selectedFlight.price}</span>
+                    </div>
+                    <button 
+                        onclick="confirmBooking()" 
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg mt-4 shadow-lg disabled:opacity-50 transition-all"
+                        ${!selectedSeat ? 'disabled' : ''}
+                    >
+                        Confirm & Pay
+                    </button>
+                </div>
+            `;
+        }
+
+        function confirmBooking() {
+            const pnr = "SR" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            document.getElementById('pnrDisplay').innerText = pnr;
+            showPage('success');
+        }
+
+        // Initialize
+        window.onload = () => {
+            generateData();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
